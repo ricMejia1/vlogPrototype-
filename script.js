@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', (event) => {
-    loadPosts();
+    loadChats();
 });
+
+let currentChat = 'default';
 
 function addPost() {
     const postContent = document.getElementById('postContent').value;
@@ -31,14 +33,16 @@ function addPost() {
     }
 
     Promise.all(readerPromises).then(() => {
-        const posts = getPosts();
-        posts.push({
+        const chats = getChats();
+        if (!chats[currentChat]) {
+            chats[currentChat] = [];
+        }
+        chats[currentChat].push({
             content: postContent,
-            attachments: attachments,
-            date: new Date().toLocaleString()
+            attachments: attachments
         });
-        savePosts(posts);
-        displayPosts(posts);
+        saveChats(chats);
+        displayPosts(chats[currentChat]);
 
         document.getElementById('postContent').value = '';
         fileInput.value = '';
@@ -46,24 +50,55 @@ function addPost() {
 }
 
 function deletePost(index) {
-    const posts = getPosts();
-    posts.splice(index, 1);
-    savePosts(posts);
-    displayPosts(posts);
+    const chats = getChats();
+    chats[currentChat].splice(index, 1);
+    saveChats(chats);
+    displayPosts(chats[currentChat]);
 }
 
-function getPosts() {
-    const posts = localStorage.getItem('posts');
-    return posts ? JSON.parse(posts) : [];
+function getChats() {
+    const chats = localStorage.getItem('chats');
+    return chats ? JSON.parse(chats) : {};
 }
 
-function savePosts(posts) {
-    localStorage.setItem('posts', JSON.stringify(posts));
+function saveChats(chats) {
+    localStorage.setItem('chats', JSON.stringify(chats));
 }
 
-function loadPosts() {
-    const posts = getPosts();
-    displayPosts(posts);
+function loadChats() {
+    const chats = getChats();
+    const chatList = document.getElementById('chatList');
+    chatList.innerHTML = '';
+
+    Object.keys(chats).forEach(chat => {
+        const chatItem = document.createElement('li');
+        chatItem.textContent = chat;
+        chatItem.onclick = () => switchChat(chat);
+        chatList.appendChild(chatItem);
+    });
+
+    if (!chats[currentChat]) {
+        chats[currentChat] = [];
+        saveChats(chats);
+    }
+    displayPosts(chats[currentChat]);
+}
+
+function switchChat(chat) {
+    currentChat = chat;
+    const chats = getChats();
+    displayPosts(chats[chat]);
+}
+
+function newChat() {
+    const chatName = prompt("Enter chat name:");
+    if (chatName && chatName.trim()) {
+        const chats = getChats();
+        chats[chatName] = [];
+        saveChats(chats);
+        loadChats();
+        switchChat(chatName);
+    }
 }
 
 function displayPosts(posts) {
@@ -75,10 +110,6 @@ function displayPosts(posts) {
 
         const postContent = document.createElement('span');
         postContent.textContent = post.content;
-
-        const postDate = document.createElement('div');
-        postDate.className = 'post-date';
-        postDate.textContent = `Posted on: ${post.date}`;
 
         const attachmentsContainer = document.createElement('div');
         attachmentsContainer.className = 'attachments';
@@ -105,16 +136,4 @@ function displayPosts(posts) {
             attachmentsContainer.appendChild(attachmentElement);
         });
 
-        const deleteButton = document.createElement('button');
-        deleteButton.className = 'delete-btn';
-        deleteButton.textContent = 'Delete';
-        deleteButton.onclick = () => deletePost(index);
-
-        postElement.appendChild(postContent);
-        postElement.appendChild(postDate);
-        postElement.appendChild(attachmentsContainer);
-        postElement.appendChild(deleteButton);
-        postsContainer.appendChild(postElement);
-    });
-}
-
+        cons
