@@ -13,8 +13,6 @@ function addPost() {
         return;
     }
 
-    console.log("Posting content:", postContent); // Debug line
-
     const chats = getChats();
     if (!chats[currentChat]) {
         chats[currentChat] = [];
@@ -36,13 +34,26 @@ function deletePost(index) {
 }
 
 function deleteCurrentChat() {
-    console.log("Delete chat button clicked"); // Debug line
+    if (currentChat === 'default') {
+        alert("Cannot delete the default chat.");
+        return;
+    }
+
     const chats = getChats();
-    if (confirm("Are you sure you want to delete all chats including the default chat?")) {
-        localStorage.removeItem('chats'); // Remove all chats
+    if (confirm(`Are you sure you want to delete the chat "${currentChat}"?`)) {
+        delete chats[currentChat]; // Remove the current chat
+        saveChats(chats);
         loadChats(); // Reload chats to update the sidebar
-        currentChat = 'default'; // Reset to default chat
-        displayPosts([]); // Clear displayed posts
+
+        if (Object.keys(chats).length > 0) {
+            // If there are other chats left, switch to the first available chat
+            const firstChat = Object.keys(chats)[0];
+            switchChat(firstChat);
+        } else {
+            // If no other chats are left, reset to default chat
+            currentChat = 'default';
+            displayPosts([]);
+        }
     }
 }
 
@@ -67,17 +78,18 @@ function loadChats() {
         chatList.appendChild(chatItem);
     });
 
-    if (!chats[currentChat]) {
-        chats[currentChat] = [];
-        saveChats(chats);
+    if (!chats[currentChat] && currentChat !== 'default') {
+        // Switch to default chat if the current chat no longer exists
+        currentChat = 'default';
     }
-    displayPosts(chats[currentChat]);
+
+    displayPosts(chats[currentChat] || []);
 }
 
 function switchChat(chat) {
     currentChat = chat;
     const chats = getChats();
-    displayPosts(chats[chat]);
+    displayPosts(chats[chat] || []);
 }
 
 function newChat() {
