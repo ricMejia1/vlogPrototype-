@@ -6,47 +6,23 @@ let currentChat = 'default';
 
 function addPost() {
     const postContent = document.getElementById('postContent').value;
-    const fileInput = document.getElementById('fileInput');
-    const files = fileInput.files;
-    const attachments = [];
 
-    if (postContent.trim() === "" && files.length === 0) {
-        alert("Please write something or attach a file before posting!");
+    if (postContent.trim() === "") {
+        alert("Please write something before posting!");
         return;
     }
 
-    const readerPromises = [];
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const reader = new FileReader();
-        readerPromises.push(new Promise((resolve) => {
-            reader.onload = (e) => {
-                attachments.push({
-                    name: file.name,
-                    type: file.type,
-                    content: e.target.result
-                });
-                resolve();
-            };
-            reader.readAsDataURL(file);
-        }));
+    const chats = getChats();
+    if (!chats[currentChat]) {
+        chats[currentChat] = [];
     }
-
-    Promise.all(readerPromises).then(() => {
-        const chats = getChats();
-        if (!chats[currentChat]) {
-            chats[currentChat] = [];
-        }
-        chats[currentChat].push({
-            content: postContent,
-            attachments: attachments
-        });
-        saveChats(chats);
-        displayPosts(chats[currentChat]);
-
-        document.getElementById('postContent').value = '';
-        fileInput.value = '';
+    chats[currentChat].push({
+        content: postContent
     });
+    saveChats(chats);
+    displayPosts(chats[currentChat]);
+
+    document.getElementById('postContent').value = '';
 }
 
 function deletePost(index) {
@@ -108,32 +84,4 @@ function displayPosts(posts) {
         const postElement = document.createElement('div');
         postElement.className = 'post';
 
-        const postContent = document.createElement('span');
-        postContent.textContent = post.content;
-
-        const attachmentsContainer = document.createElement('div');
-        attachmentsContainer.className = 'attachments';
-
-        post.attachments.forEach((attachment) => {
-            const attachmentElement = document.createElement('div');
-            if (attachment.type.startsWith('image/')) {
-                const img = document.createElement('img');
-                img.src = attachment.content;
-                img.alt = attachment.name;
-                attachmentElement.appendChild(img);
-            } else if (attachment.type.startsWith('video/')) {
-                const video = document.createElement('video');
-                video.controls = true;
-                video.src = attachment.content;
-                attachmentElement.appendChild(video);
-            } else if (attachment.type === 'application/pdf') {
-                const pdfLink = document.createElement('a');
-                pdfLink.href = attachment.content;
-                pdfLink.target = '_blank';
-                pdfLink.textContent = attachment.name;
-                attachmentElement.appendChild(pdfLink);
-            }
-            attachmentsContainer.appendChild(attachmentElement);
-        });
-
-        cons
+        const postContent =
