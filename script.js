@@ -36,18 +36,13 @@ function deletePost(index) {
 }
 
 function deleteCurrentChat() {
+    console.log("Delete chat button clicked"); // Debug line
     const chats = getChats();
-    if (currentChat === 'default') {
-        alert("Cannot delete the default chat.");
-        return;
-    }
-
-    if (confirm(`Are you sure you want to delete the chat "${currentChat}"?`)) {
-        delete chats[currentChat];
-        saveChats(chats);
-        loadChats();
-        currentChat = 'default';
-        displayPosts([]);
+    if (confirm("Are you sure you want to delete all chats including the default chat?")) {
+        localStorage.removeItem('chats'); // Remove all chats
+        loadChats(); // Reload chats to update the sidebar
+        currentChat = 'default'; // Reset to default chat
+        displayPosts([]); // Clear displayed posts
     }
 }
 
