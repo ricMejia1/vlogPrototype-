@@ -108,3 +108,18 @@ button:hover {
 .delete-btn:hover {
     background-color: #a71d1d; /* Even darker red on hover */
 }
+
+/* Add these styles for the new delete chat button */
+button {
+    padding: 10px 20px;
+    background-color: #e84c3d; /* Red background for button */
+    color: #fff; /* White text color */
+    border: none;
+    cursor: pointer;
+    align-self: flex-end;
+    margin-top: 10px; /* Space above the button */
+}
+
+button:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
