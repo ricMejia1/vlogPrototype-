@@ -35,6 +35,22 @@ function deletePost(index) {
     displayPosts(chats[currentChat]);
 }
 
+function deleteCurrentChat() {
+    const chats = getChats();
+    if (currentChat === 'default') {
+        alert("Cannot delete the default chat.");
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete the chat "${currentChat}"?`)) {
+        delete chats[currentChat];
+        saveChats(chats);
+        loadChats();
+        currentChat = 'default';
+        displayPosts([]);
+    }
+}
+
 function getChats() {
     const chats = localStorage.getItem('chats');
     return chats ? JSON.parse(chats) : {};
