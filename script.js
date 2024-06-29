@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', (event) => {
     loadChats();
+    document.getElementById('sendButton').addEventListener('click', addPost);
 });
 
 let currentChat = 'default';
@@ -84,4 +85,16 @@ function displayPosts(posts) {
         const postElement = document.createElement('div');
         postElement.className = 'post';
 
-        const postContent =
+        const postContent = document.createElement('span');
+        postContent.textContent = post.content;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-btn';
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = () => deletePost(index);
+
+        postElement.appendChild(postContent);
+        postElement.appendChild(deleteButton);
+        postsContainer.appendChild(postElement);
+    });
+}
