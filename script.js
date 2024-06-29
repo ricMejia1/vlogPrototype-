@@ -17,6 +17,13 @@ function addPost() {
     document.getElementById('postContent').value = '';
 }
 
+function deletePost(index) {
+    const posts = getPosts();
+    posts.splice(index, 1);
+    savePosts(posts);
+    displayPosts(posts);
+}
+
 function getPosts() {
     const posts = localStorage.getItem('posts');
     return posts ? JSON.parse(posts) : [];
@@ -34,10 +41,20 @@ function loadPosts() {
 function displayPosts(posts) {
     const postsContainer = document.getElementById('posts');
     postsContainer.innerHTML = '';
-    posts.forEach(post => {
+    posts.forEach((post, index) => {
         const postElement = document.createElement('div');
         postElement.className = 'post';
-        postElement.textContent = post;
+
+        const postContent = document.createElement('span');
+        postContent.textContent = post;
+        
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete-btn';
+        deleteButton.textContent = 'Delete';
+        deleteButton.onclick = () => deletePost(index);
+
+        postElement.appendChild(postContent);
+        postElement.appendChild(deleteButton);
         postsContainer.appendChild(postElement);
     });
 }
