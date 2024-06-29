@@ -70,10 +70,6 @@ textarea {
     margin-bottom: 10px;
 }
 
-input[type="file"] {
-    margin-bottom: 10px;
-}
-
 button {
     padding: 10px 20px;
     background-color: #007BFF;
@@ -92,22 +88,6 @@ button:hover {
     padding: 10px;
     margin-bottom: 10px;
     border-radius: 5px;
-}
-
-.attachments img, .attachments video {
-    max-width: 100%;
-    margin-top: 10px;
-}
-
-.attachments a {
-    display: block;
-    margin-top: 10px;
-    color: #007BFF;
-    text-decoration: none;
-}
-
-.attachments a:hover {
-    text-decoration: underline;
 }
 
 .delete-btn {
