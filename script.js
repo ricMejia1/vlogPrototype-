@@ -13,6 +13,8 @@ function addPost() {
         return;
     }
 
+    console.log("Posting content:", postContent); // Debug line
+
     const chats = getChats();
     if (!chats[currentChat]) {
         chats[currentChat] = [];
