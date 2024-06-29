@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', (event) => {
+document.addEventListener('DOMContentLoaded', () => {
     loadChats();
     document.getElementById('sendButton').addEventListener('click', addPost);
 });
@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', (event) => {
 let currentChat = 'default';
 
 function addPost() {
-    const postContent = document.getElementById('postContent').value;
+    const postContent = document.getElementById('postContent').value.trim();
 
-    if (postContent.trim() === "") {
+    if (postContent === "") {
         alert("Please write something before posting!");
         return;
     }
@@ -23,7 +23,7 @@ function addPost() {
     saveChats(chats);
     displayPosts(chats[currentChat]);
 
-    document.getElementById('postContent').value = '';
+    document.getElementById('postContent').value = '';  // Clear the textarea
 }
 
 function deletePost(index) {
