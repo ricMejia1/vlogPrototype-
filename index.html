@@ -8,15 +8,20 @@
 </head>
 <body>
     <div class="container">
-        <h1>My Personal Vlog</h1>
-        <div class="input-area">
-            <textarea id="postContent" placeholder="Write something..."></textarea>
-            <input type="file" id="fileInput" multiple>
-            <button onclick="addPost()">Post</button>
+        <div class="sidebar">
+            <h2>Chats</h2>
+            <ul id="chatList"></ul>
+            <button onclick="newChat()">New Chat</button>
         </div>
-        <div id="posts"></div>
+        <div class="chat-area">
+            <div id="posts" class="posts"></div>
+            <div class="input-area">
+                <textarea id="postContent" placeholder="Write something..."></textarea>
+                <input type="file" id="fileInput" multiple>
+                <button onclick="addPost()">Send</button>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
 </html>
-
