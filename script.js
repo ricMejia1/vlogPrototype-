@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+/*document.addEventListener('DOMContentLoaded', () => {
     loadChats();
     document.getElementById('sendButton').addEventListener('click', addPost);
 });
@@ -123,3 +123,4 @@ function displayPosts(posts) {
         postsContainer.appendChild(postElement);
     });
 }
+*/
