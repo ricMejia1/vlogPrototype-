@@ -32,7 +32,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Advanced Symptom Checker (Experimental)</title>
+<title>Advanced Symptom Checker (Experimental, Bilingual)</title>
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -49,7 +49,7 @@
         padding: 20px;
         border-radius: 8px;
     }
-    input[type="text"] {
+    input[type="text"], select {
         width: 100%;
         padding: 10px;
         margin-bottom: 10px;
@@ -85,64 +85,792 @@
 </head>
 <body>
 <div class="container">
-    <h1>Advanced Symptom Checker (Experimental)</h1>
-    <p>Type in your symptoms or what you are feeling, and this experimental tool will try to suggest an OTC medication and explain why. This is not medical advice.</p>
+    <h1 id="title">Advanced Symptom Checker (Experimental)</h1>
+    <p id="intro">Type in your symptoms and get an experimental OTC medication suggestion. Not medical advice.</p>
+    
+    <label for="languageSelect" id="languageLabel">Language / Idioma:</label>
+    <select id="languageSelect" onchange="updateLanguage()">
+        <option value="en">English</option>
+        <option value="es">Español</option>
+    </select>
     
     <input type="text" id="symptomInput" placeholder="e.g., 'I have a throbbing headache and a stuffy nose'" />
     <button onclick="suggestMedication()">Get Suggestion</button>
     
     <div class="results" id="results"></div>
-    <div class="disclaimer">
-        <strong>Disclaimer:</strong> This tool is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider.
+    <div class="disclaimer" id="disclaimer">
+        <strong>Disclaimer:</strong> This tool is not a substitute for professional medical advice.
     </div>
 </div>
 
 <script>
-// A more structured data format: each object includes symptom keywords, a suggested medication, and reasoning.
-// You can easily expand this database with more conditions, medications, and details.
-const conditions = [
+// Existing English conditions
+const conditionsEN = [
     {
-        name: "Headache",
+        name: "Headache / Migraine",
         keywords: ["headache", "migraine", "head pain"],
         medication: "Acetaminophen (Tylenol) or Ibuprofen (Advil)",
-        reasoning: "These OTC pain relievers help reduce mild to moderate headache pain.",
+        reasoning: "These OTC pain relievers help reduce mild to moderate headache or migraine pain."
     },
     {
         name: "Allergies / Runny Nose",
-        keywords: ["runny nose", "congestion", "allergies", "sneezing", "hay fever"],
+        keywords: ["runny nose", "congestion", "allergies", "sneezing", "hay fever", "stuffy nose"],
         medication: "An antihistamine like Cetirizine (Zyrtec) or Loratadine (Claritin)",
-        reasoning: "These medications can help reduce symptoms of allergic rhinitis such as runny nose and sneezing.",
+        reasoning: "These medications can help reduce allergy symptoms such as runny nose, sneezing, and congestion."
     },
     {
         name: "Cough",
         keywords: ["cough", "dry cough", "persistent cough"],
         medication: "A cough suppressant (Dextromethorphan) or expectorant (Guaifenesin)",
-        reasoning: "Cough suppressants help calm a persistent cough, while expectorants help loosen mucus in the airways.",
+        reasoning: "Cough suppressants help calm a persistent cough, while expectorants help loosen mucus."
     },
     {
         name: "Sore Throat",
         keywords: ["sore throat", "throat pain", "difficulty swallowing"],
         medication: "Lozenges or sprays containing benzocaine, and Ibuprofen",
-        reasoning: "These can help numb the throat and reduce pain and irritation.",
+        reasoning: "These can help numb the throat and reduce pain and irritation."
     },
     {
         name: "Fever / Body Aches",
         keywords: ["fever", "chills", "body ache", "aches", "flu-like"],
         medication: "Acetaminophen (Tylenol) or Ibuprofen (Advil)",
-        reasoning: "These medications help bring down a fever and alleviate general body aches.",
+        reasoning: "These medications help bring down a fever and alleviate general body aches."
     },
+    {
+        name: "Stomachache / Nausea",
+        keywords: ["stomachache", "abdominal pain", "nausea", "upset stomach"],
+        medication: "Bismuth Subsalicylate (Pepto-Bismol) or Antacid (Tums)",
+        reasoning: "These can help settle an upset stomach, relieve nausea, and reduce acid indigestion."
+    },
+    {
+        name: "Diarrhea",
+        keywords: ["diarrhea", "loose stools", "frequent bowel movements"],
+        medication: "Loperamide (Imodium)",
+        reasoning: "Loperamide can help slow down intestinal movement and reduce the frequency of bowel movements."
+    },
+    {
+        name: "Heartburn / Acid Reflux",
+        keywords: ["heartburn", "acid reflux", "acidic taste", "burning chest"],
+        medication: "Antacids (Tums) or H2-blockers (Ranitidine)",
+        reasoning: "These reduce stomach acid and help relieve heartburn and acid reflux symptoms."
+    },
+    {
+        name: "Muscle Pain",
+        keywords: ["muscle pain", "muscle ache", "sore muscles", "muscle soreness"],
+        medication: "Ibuprofen (Advil) or Naproxen (Aleve)",
+        reasoning: "NSAIDs can help reduce inflammation and relieve muscle pain."
+    }
 ];
 
-// A simple fuzzy matching: count how many keywords from each condition appear in the user's input.
+// Add 50 more English conditions
+conditionsEN.push(
+    {
+        name: "Constipation",
+        keywords: ["constipation", "hard stools", "difficulty passing stool"],
+        medication: "Polyethylene Glycol (MiraLAX)",
+        reasoning: "Helps soften stool and relieve constipation."
+    },
+    {
+        name: "Nasal Dryness",
+        keywords: ["dry nose", "nasal dryness", "nose dryness"],
+        medication: "Saline Nasal Spray",
+        reasoning: "Helps moisturize nasal passages and relieve dryness."
+    },
+    {
+        name: "Dry Eyes",
+        keywords: ["dry eyes", "eye dryness", "irritated eyes"],
+        medication: "Artificial Tears (Lubricant Eye Drops)",
+        reasoning: "Lubricating eye drops help relieve dryness and irritation."
+    },
+    {
+        name: "Chapped Lips",
+        keywords: ["chapped lips", "dry lips", "lip dryness"],
+        medication: "Lip Balm (Petrolatum, Beeswax)",
+        reasoning: "Moisturizes and protects lips from further dryness."
+    },
+    {
+        name: "Mild Acne",
+        keywords: ["acne", "pimples", "breakouts"],
+        medication: "Benzoyl Peroxide or Salicylic Acid Wash",
+        reasoning: "These help reduce bacteria and unclog pores."
+    },
+    {
+        name: "Mild Eczema",
+        keywords: ["eczema", "dry itchy skin", "red patches"],
+        medication: "Hydrocortisone Cream",
+        reasoning: "Can reduce inflammation, redness, and itching."
+    },
+    {
+        name: "Dandruff",
+        keywords: ["dandruff", "flaky scalp", "scalp itching"],
+        medication: "Anti-Dandruff Shampoo (Zinc Pyrithione)",
+        reasoning: "Helps reduce yeast on the scalp and alleviate flakes."
+    },
+    {
+        name: "Mild Insomnia",
+        keywords: ["insomnia", "trouble sleeping", "difficulty sleeping"],
+        medication: "Melatonin (OTC)",
+        reasoning: "May help regulate sleep patterns and improve sleep onset."
+    },
+    {
+        name: "Minor Anxiety",
+        keywords: ["mild anxiety", "nervousness", "feeling anxious"],
+        medication: "OTC Calming Teas (Chamomile), OTC Supplements (L-Theanine)",
+        reasoning: "May help promote relaxation. (Note: Consult a doctor for persistent anxiety.)"
+    },
+    {
+        name: "Dry Skin",
+        keywords: ["dry skin", "flaky skin", "itchy dry patches"],
+        medication: "Moisturizing Lotion (Ceramide-based)",
+        reasoning: "Helps restore the skin barrier and retain moisture."
+    },
+    {
+        name: "Minor Cuts / Scrapes",
+        keywords: ["minor cut", "scrape", "small wound"],
+        medication: "Antibiotic Ointment (Neosporin)",
+        reasoning: "Helps prevent infection and aids healing."
+    },
+    {
+        name: "Sunburn",
+        keywords: ["sunburn", "red skin after sun", "burned by sun"],
+        medication: "Aloe Vera Gel",
+        reasoning: "Soothes burnt skin and helps provide moisture."
+    },
+    {
+        name: "Bug Bites",
+        keywords: ["bug bite", "mosquito bite", "insect bite"],
+        medication: "Topical Hydrocortisone Cream",
+        reasoning: "Reduces itching and inflammation caused by insect bites."
+    },
+    {
+        name: "Athlete's Foot",
+        keywords: ["athlete's foot", "foot fungus", "itchy feet"],
+        medication: "Antifungal Cream (Clotrimazole)",
+        reasoning: "Helps kill the fungus and relieve itching and burning."
+    },
+    {
+        name: "Jock Itch",
+        keywords: ["jock itch", "groin itch", "fungal rash in groin"],
+        medication: "Antifungal Cream (Miconazole)",
+        reasoning: "Treats fungal infection in the groin area, relieving itch and rash."
+    },
+    {
+        name: "Cold Sores",
+        keywords: ["cold sore", "fever blister", "herpes simplex on lip"],
+        medication: "Docosanol (Abreva)",
+        reasoning: "Helps shorten healing time and relieve symptoms of cold sores."
+    },
+    {
+        name: "Canker Sores",
+        keywords: ["canker sore", "mouth ulcer", "oral ulcer"],
+        medication: "Benzocaine Oral Gel",
+        reasoning: "Numbs the sore and provides temporary pain relief."
+    },
+    {
+        name: "Dry Mouth",
+        keywords: ["dry mouth", "xerostomia", "cotton mouth"],
+        medication: "Artificial Saliva Rinse",
+        reasoning: "Helps moisten the mouth and relieve discomfort."
+    },
+    {
+        name: "Eye Allergies",
+        keywords: ["itchy eyes", "allergic conjunctivitis", "red eyes"],
+        medication: "Antihistamine Eye Drops (Ketotifen)",
+        reasoning: "Relieves itching, redness, and watering caused by allergies."
+    },
+    {
+        name: "Minor Toothache",
+        keywords: ["toothache", "tooth pain", "mild tooth pain"],
+        medication: "Oral Pain Relievers (Orajel - Benzocaine), Ibuprofen",
+        reasoning: "Numbs the area and reduces pain temporarily."
+    },
+    {
+        name: "Sensitive Teeth",
+        keywords: ["sensitive teeth", "tooth sensitivity", "pain with cold foods"],
+        medication: "Desensitizing Toothpaste (Potassium Nitrate)",
+        reasoning: "Helps reduce tooth sensitivity over time."
+    },
+    {
+        name: "Gum Irritation",
+        keywords: ["gum pain", "gum irritation", "sore gums"],
+        medication: "Oral Rinse (Mild Saltwater), OTC Oral Gel",
+        reasoning: "Soothes inflamed gums and may reduce discomfort."
+    },
+    {
+        name: "Ear Wax Buildup",
+        keywords: ["ear wax", "ear blockage", "ear fullness"],
+        medication: "Carbamide Peroxide Ear Drops",
+        reasoning: "Helps soften earwax so it can be easily removed."
+    },
+    {
+        name: "Mild Earache",
+        keywords: ["earache", "ear pain", "ear discomfort"],
+        medication: "Acetaminophen or Ibuprofen",
+        reasoning: "Reduces pain and discomfort in the ear."
+    },
+    {
+        name: "Dry Scalp",
+        keywords: ["dry scalp", "scalp dryness", "flaky scalp (non-dandruff)"],
+        medication: "Moisturizing Scalp Oils",
+        reasoning: "Helps hydrate the scalp and reduce dryness."
+    },
+    {
+        name: "Nail Fungus",
+        keywords: ["nail fungus", "fungal nail", "thickened nail"],
+        medication: "Antifungal Nail Solutions (Undecylenic Acid)",
+        reasoning: "Helps slow fungal growth on nails."
+    },
+    {
+        name: "Mouth Dryness at Night",
+        keywords: ["dry mouth at night", "nighttime dryness", "waking with dry mouth"],
+        medication: "Artificial Saliva Spray",
+        reasoning: "Provides moisture to relieve dryness during sleep."
+    },
+    {
+        name: "Minor Back Pain",
+        keywords: ["back pain", "minor backache", "sore back"],
+        medication: "Ibuprofen or Naproxen",
+        reasoning: "Reduces inflammation and pain in muscles."
+    },
+    {
+        name: "Neck Pain",
+        keywords: ["neck pain", "stiff neck", "neck ache"],
+        medication: "Acetaminophen or Ibuprofen",
+        reasoning: "Helps alleviate mild neck pain and stiffness."
+    },
+    {
+        name: "Mild Joint Pain",
+        keywords: ["joint pain", "mild arthritis", "achy joints"],
+        medication: "Ibuprofen or Naproxen",
+        reasoning: "Reduces inflammation and pain in joints."
+    },
+    {
+        name: "Mild Menstrual Cramps",
+        keywords: ["menstrual cramps", "period pain", "cramps"],
+        medication: "Ibuprofen or Naproxen",
+        reasoning: "Relieves pain and reduces inflammation during menstruation."
+    },
+    {
+        name: "Minor Bruises",
+        keywords: ["bruise", "bruising", "black and blue mark"],
+        medication: "Arnica Gel (OTC)",
+        reasoning: "May help reduce swelling and discoloration."
+    },
+    {
+        name: "Minor Sprain",
+        keywords: ["sprain", "twisted ankle", "mild ligament injury"],
+        medication: "Ibuprofen or Naproxen",
+        reasoning: "Helps with pain and inflammation in a minor sprain."
+    },
+    {
+        name: "Nosebleeds",
+        keywords: ["nosebleed", "bleeding nose", "epistaxis"],
+        medication: "Nasal Saline, Gentle Pressure, OTC Nasal Gel",
+        reasoning: "Keeps nasal passages moist and helps slow bleeding."
+    },
+    {
+        name: "Hives",
+        keywords: ["hives", "urticaria", "itchy welts"],
+        medication: "Antihistamine (Cetirizine, Loratadine)",
+        reasoning: "Helps reduce the allergic reaction causing hives."
+    },
+    {
+        name: "Poison Ivy Rash",
+        keywords: ["poison ivy", "poison oak", "itchy plant rash"],
+        medication: "Topical Hydrocortisone, Calamine Lotion",
+        reasoning: "Soothes itching and reduces inflammation from plant rashes."
+    },
+    {
+        name: "Minor Burn (First Degree)",
+        keywords: ["minor burn", "mild burn", "red skin burn"],
+        medication: "Cool Water, Aloe Vera Gel",
+        reasoning: "Soothes and cools the area, relieving pain and aiding healing."
+    },
+    {
+        name: "Gas / Bloating",
+        keywords: ["gas", "bloating", "excess gas"],
+        medication: "Simethicone (Gas-X)",
+        reasoning: "Helps break up gas bubbles for easier release."
+    },
+    {
+        name: "Motion Sickness",
+        keywords: ["motion sickness", "nausea from travel", "car sickness"],
+        medication: "Dimenhydrinate (Dramamine)",
+        reasoning: "Reduces nausea and vomiting from motion sickness."
+    },
+    {
+        name: "Mild Dehydration",
+        keywords: ["dehydration", "dry mouth", "lightheaded"],
+        medication: "Oral Rehydration Solutions (Pedialyte)",
+        reasoning: "Replenishes electrolytes and fluids."
+    },
+    {
+        name: "Mild Tension Headache",
+        keywords: ["tension headache", "stress headache", "head pressure"],
+        medication: "Acetaminophen or Ibuprofen",
+        reasoning: "Relieves the pain associated with tension headaches."
+    },
+    {
+        name: "Minor Sleepiness (Daytime)",
+        keywords: ["sleepy", "drowsy", "daytime fatigue"],
+        medication: "Caffeine Pills (OTC)",
+        reasoning: "Temporarily boosts alertness."
+    },
+    {
+        name: "Occasional Acid Indigestion",
+        keywords: ["acid indigestion", "mild dyspepsia", "sour stomach"],
+        medication: "Antacids",
+        reasoning: "Neutralize stomach acid for quick relief."
+    },
+    {
+        name: "Occasional Nausea (Non-specific)",
+        keywords: ["nausea without cause", "feeling queasy"],
+        medication: "Bismuth Subsalicylate (Pepto-Bismol)",
+        reasoning: "Helps calm the stomach and relieve mild nausea."
+    },
+    {
+        name: "Irritated Eyes (Non-allergic)",
+        keywords: ["irritated eyes", "red eyes (non-allergic)", "tired eyes"],
+        medication: "Lubricant Eye Drops",
+        reasoning: "Moisturizes eyes and reduces irritation."
+    },
+    {
+        name: "Mild Cold Symptoms (Non-specific)",
+        keywords: ["mild cold", "slight sniffles", "light cold symptoms"],
+        medication: "Combination Cold Relief (Acetaminophen + Decongestant)",
+        reasoning: "Alleviates mild cold symptoms like aches and stuffy nose."
+    },
+    {
+        name: "Mild Whiteheads/Blackheads",
+        keywords: ["whiteheads", "blackheads", "clogged pores"],
+        medication: "Salicylic Acid Cleanser",
+        reasoning: "Helps unclog pores and reduce mild breakouts."
+    },
+    {
+        name: "Cracked Heels",
+        keywords: ["cracked heels", "dry heels", "heel fissures"],
+        medication: "Urea Foot Cream",
+        reasoning: "Softens thick, dry skin and helps heal cracks."
+    },
+    {
+        name: "Minor Friction Blisters",
+        keywords: ["blisters", "friction blister", "foot blister"],
+        medication: "Protective Blister Bandages",
+        reasoning: "Protects the area and promotes healing."
+    },
+    {
+        name: "Minor Swimmer's Ear (External Ear Canal Itch)",
+        keywords: ["ear itch", "mild swimmer's ear", "ear canal dryness"],
+        medication: "Acetic Acid Ear Drops (OTC)",
+        reasoning: "Helps restore ear canal pH and reduce mild irritation."
+    }
+);
+
+// Add 50 more Spanish conditions
+const conditionsES = [
+    {
+        name: "Dolor de cabeza / Migraña",
+        keywords: ["dolor de cabeza", "migraña", "dolor en la cabeza"],
+        medication: "Paracetamol (Acetaminofén) o Ibuprofeno",
+        reasoning: "Estos analgésicos de venta libre ayudan a reducir el dolor leve a moderado de cabeza o migraña."
+    },
+    {
+        name: "Alergias / Goteo Nasal",
+        keywords: ["alergias", "goteo nasal", "congestión", "estornudos", "rinitis", "nariz tapada"],
+        medication: "Un antihistamínico como Cetirizina o Loratadina",
+        reasoning: "Estos medicamentos pueden ayudar a reducir los síntomas de la rinitis alérgica, como goteo nasal y estornudos."
+    },
+    {
+        name: "Tos",
+        keywords: ["tos", "tos seca", "tos persistente"],
+        medication: "Un supresor de la tos (Dextrometorfano) o un expectorante (Guaifenesina)",
+        reasoning: "Los supresores calman la tos persistente, mientras que los expectorantes ayudan a aflojar la mucosidad."
+    },
+    {
+        name: "Dolor de garganta",
+        keywords: ["dolor de garganta", "garganta irritada", "dificultad para tragar"],
+        medication: "Pastillas o sprays con benzocaína, e Ibuprofeno",
+        reasoning: "Pueden adormecer la garganta y reducir el dolor y la irritación."
+    },
+    {
+        name: "Fiebre / Dolores corporales",
+        keywords: ["fiebre", "escalofríos", "dolor corporal", "dolores", "síntomas gripales"],
+        medication: "Paracetamol (Acetaminofén) o Ibuprofeno",
+        reasoning: "Estos medicamentos ayudan a bajar la fiebre y a aliviar los dolores corporales en general."
+    },
+    {
+        name: "Dolor de estómago / Náuseas",
+        keywords: ["dolor de estómago", "dolor abdominal", "náuseas", "malestar estomacal"],
+        medication: "Bismuto Subsalicilato (Pepto-Bismol) o un antiácido (Tums)",
+        reasoning: "Pueden ayudar a asentar el estómago, aliviar las náuseas y reducir la acidez estomacal."
+    },
+    {
+        name: "Diarrea",
+        keywords: ["diarrea", "evacuaciones frecuentes", "heces líquidas"],
+        medication: "Loperamida (Imodium)",
+        reasoning: "La loperamida ayuda a disminuir el movimiento intestinal y reducir la frecuencia de las evacuaciones."
+    },
+    {
+        name: "Acidez / Reflujo ácido",
+        keywords: ["acidez", "reflujo ácido", "sabor ácido", "ardor en el pecho"],
+        medication: "Antiácidos (Tums) o bloqueadores H2 (Ranitidina)",
+        reasoning: "Disminuyen la acidez estomacal y alivian la acidez y los síntomas de reflujo."
+    },
+    {
+        name: "Dolor muscular",
+        keywords: ["dolor muscular", "dolor en los músculos", "músculos adoloridos", "molestia muscular"],
+        medication: "Ibuprofeno o Naproxeno",
+        reasoning: "Los AINEs ayudan a reducir la inflamación y aliviar el dolor muscular."
+    }
+];
+
+// Add 50 more Spanish conditions
+conditionsES.push(
+    {
+        name: "Estreñimiento",
+        keywords: ["estreñimiento", "heces duras", "dificultad para defecar"],
+        medication: "Polietilenglicol (MiraLAX)",
+        reasoning: "Ayuda a ablandar las heces y aliviar el estreñimiento."
+    },
+    {
+        name: "Sequedad Nasal",
+        keywords: ["nariz seca", "sequedad nasal", "fosas nasales secas"],
+        medication: "Spray nasal salino",
+        reasoning: "Ayuda a humedecer las fosas nasales y aliviar la sequedad."
+    },
+    {
+        name: "Ojos Secos",
+        keywords: ["ojos secos", "sequedad ocular", "irritación ocular"],
+        medication: "Lágrimas Artificiales (Gotas Lubricantes)",
+        reasoning: "Hidratan los ojos y alivian la irritación."
+    },
+    {
+        name: "Labios Agrietados",
+        keywords: ["labios agrietados", "labios secos", "sequedad en los labios"],
+        medication: "Bálsamo Labial",
+        reasoning: "Hidrata y protege los labios de la sequedad."
+    },
+    {
+        name: "Acné Leve",
+        keywords: ["acné", "granitos", "brotes de acné"],
+        medication: "Peróxido de Benzoílo o Ácido Salicílico",
+        reasoning: "Ayudan a reducir las bacterias y destapar los poros."
+    },
+    {
+        name: "Eccema Leve",
+        keywords: ["eccema", "piel seca y con picazón", "manchas rojas"],
+        medication: "Crema de Hidrocortisona",
+        reasoning: "Puede reducir la inflamación, el enrojecimiento y la picazón."
+    },
+    {
+        name: "Caspa",
+        keywords: ["caspa", "cuero cabelludo con escamas", "picazón en la cabeza"],
+        medication: "Champú Anticaspa (Piritiona de Zinc)",
+        reasoning: "Ayuda a reducir el hongo del cuero cabelludo y aliviar la descamación."
+    },
+    {
+        name: "Insomnio Leve",
+        keywords: ["insomnio", "dificultad para dormir", "problemas para conciliar el sueño"],
+        medication: "Melatonina (OTC)",
+        reasoning: "Puede ayudar a regular los patrones de sueño y mejorar la conciliación del mismo."
+    },
+    {
+        name: "Ansiedad Leve",
+        keywords: ["ansiedad leve", "nerviosismo", "sentirse ansioso"],
+        medication: "Tés calmantes (Manzanilla), Suplementos OTC (L-Teanina)",
+        reasoning: "Pueden ayudar a promover la relajación. (Consulte a un médico si la ansiedad persiste.)"
+    },
+    {
+        name: "Piel Seca",
+        keywords: ["piel seca", "descamación", "picazón por sequedad"],
+        medication: "Crema Hidratante (con Ceramidas)",
+        reasoning: "Ayuda a restaurar la barrera cutánea y retener la humedad."
+    },
+    {
+        name: "Cortes / Raspones Leves",
+        keywords: ["corte leve", "raspón", "herida pequeña"],
+        medication: "Ungüento Antibiótico (Neosporin)",
+        reasoning: "Ayuda a prevenir infecciones y favorece la curación."
+    },
+    {
+        name: "Quemadura Solar",
+        keywords: ["quemadura solar", "piel roja por el sol", "quemado por el sol"],
+        medication: "Gel de Aloe Vera",
+        reasoning: "Calma la piel quemada y proporciona hidratación."
+    },
+    {
+        name: "Picaduras de Insectos",
+        keywords: ["picadura de insecto", "picadura de mosquito", "picazón por insectos"],
+        medication: "Crema de Hidrocortisona",
+        reasoning: "Reduce la picazón y la inflamación causadas por picaduras de insectos."
+    },
+    {
+        name: "Pie de Atleta",
+        keywords: ["pie de atleta", "hongos en los pies", "picazón entre los dedos"],
+        medication: "Crema Antifúngica (Clotrimazol)",
+        reasoning: "Ayuda a eliminar el hongo y aliviar la picazón y el ardor."
+    },
+    {
+        name: "Tiña Inguinal",
+        keywords: ["tiña inguinal", "comezón en la ingle", "hongo en la ingle"],
+        medication: "Crema Antifúngica (Miconazol)",
+        reasoning: "Trata la infección por hongos en la zona inguinal, aliviando la picazón y la erupción."
+    },
+    {
+        name: "Herpes Labial",
+        keywords: ["herpes labial", "ampolla en el labio", "fuego labial"],
+        medication: "Docosanol (Abreva)",
+        reasoning: "Ayuda a acortar el tiempo de cicatrización y aliviar los síntomas."
+    },
+    {
+        name: "Aftas Bucales",
+        keywords: ["aftas", "llagas en la boca", "úlceras orales"],
+        medication: "Gel Oral con Benzocaína",
+        reasoning: "Adormece la llaga y proporciona alivio temporal del dolor."
+    },
+    {
+        name: "Boca Seca",
+        keywords: ["boca seca", "xerostomía", "sequedad bucal"],
+        medication: "Enjuague de Saliva Artificial",
+        reasoning: "Ayuda a humedecer la boca y aliviar la incomodidad."
+    },
+    {
+        name: "Alergias Oculares",
+        keywords: ["ojos llorosos", "conjuntivitis alérgica", "picazón en los ojos por alergias"],
+        medication: "Gotas Oftálmicas Antihistamínicas (Ketotifeno)",
+        reasoning: "Alivian la picazón, el enrojecimiento y el lagrimeo causados por alergias."
+    },
+    {
+        name: "Dolor de Muela Leve",
+        keywords: ["dolor de muela", "dolor dental", "molestia en el diente"],
+        medication: "Gel Oral con Benzocaína, Ibuprofeno",
+        reasoning: "Adormece el área y reduce el dolor temporalmente."
+    },
+    {
+        name: "Dientes Sensibles",
+        keywords: ["dientes sensibles", "sensibilidad dental", "dolor con alimentos fríos"],
+        medication: "Pasta Dental Desensibilizante (con Nitrato de Potasio)",
+        reasoning: "Ayuda a reducir la sensibilidad dental con el tiempo."
+    },
+    {
+        name: "Irritación de Encías",
+        keywords: ["dolor de encías", "encías irritadas", "encías inflamadas"],
+        medication: "Enjuague Bucal Suave (Agua Salada), Gel Oral OTC",
+        reasoning: "Calma las encías inflamadas y puede reducir la molestia."
+    },
+    {
+        name: "Cerumen en el Oído",
+        keywords: ["cerumen", "cera en el oído", "tapón de cera"],
+        medication: "Gotas de Peróxido de Carbamida",
+        reasoning: "Ayuda a ablandar la cera para facilitar su extracción."
+    },
+    {
+        name: "Dolor de Oído Leve",
+        keywords: ["dolor de oído", "molestia en el oído", "dolor leve en la oreja"],
+        medication: "Paracetamol o Ibuprofeno",
+        reasoning: "Reduce el dolor y la incomodidad en el oído."
+    },
+    {
+        name: "Cuero Cabelludo Seco",
+        keywords: ["cuero cabelludo seco", "sequedad en la cabeza", "escamas (no caspa)"],
+        medication: "Aceites Hidratantes para el Cuero Cabelludo",
+        reasoning: "Hidrata el cuero cabelludo y reduce la sequedad."
+    },
+    {
+        name: "Hongo en las Uñas",
+        keywords: ["hongos en las uñas", "uñas engrosadas", "infección fúngica en la uña"],
+        medication: "Solución Antifúngica para Uñas (Ácido Undecilénico)",
+        reasoning: "Ayuda a frenar el crecimiento del hongo en las uñas."
+    },
+    {
+        name: "Boca Seca Nocturna",
+        keywords: ["boca seca por la noche", "sequedad bucal nocturna"],
+        medication: "Spray de Saliva Artificial",
+        reasoning: "Proporciona humedad para aliviar la sequedad durante el sueño."
+    },
+    {
+        name: "Dolor de Espalda Leve",
+        keywords: ["dolor de espalda leve", "molestia en la espalda", "dolor lumbar"],
+        medication: "Ibuprofeno o Naproxeno",
+        reasoning: "Reduce la inflamación y el dolor en los músculos de la espalda."
+    },
+    {
+        name: "Dolor de Cuello",
+        keywords: ["dolor de cuello", "rigidez en el cuello", "molestia cervical"],
+        medication: "Paracetamol o Ibuprofeno",
+        reasoning: "Ayuda a aliviar el dolor leve y la rigidez en el cuello."
+    },
+    {
+        name: "Dolor Articular Leve",
+        keywords: ["dolor articular", "artritis leve", "dolor en las articulaciones"],
+        medication: "Ibuprofeno o Naproxeno",
+        reasoning: "Reduce la inflamación y el dolor en las articulaciones."
+    },
+    {
+        name: "Cólicos Menstruales Leves",
+        keywords: ["cólicos menstruales", "dolor por la menstruación", "dolores menstruales"],
+        medication: "Ibuprofeno o Naproxeno",
+        reasoning: "Alivia el dolor y reduce la inflamación durante la menstruación."
+    },
+    {
+        name: "Moretones Leves",
+        keywords: ["moretón", "cardenal", "golpe con marca"],
+        medication: "Gel de Árnica (OTC)",
+        reasoning: "Puede ayudar a reducir la hinchazón y la decoloración."
+    },
+    {
+        name: "Esguince Leve",
+        keywords: ["esguince leve", "torcedura leve", "ligamento estirado"],
+        medication: "Ibuprofeno o Naproxeno",
+        reasoning: "Ayuda con el dolor y la inflamación en un esguince leve."
+    },
+    {
+        name: "Sangrado Nasal",
+        keywords: ["sangrado nasal", "hemorragia nasal", "epistaxis"],
+        medication: "Spray Nasal Salino, Presión Suave",
+        reasoning: "Mantiene húmedas las fosas nasales y ayuda a disminuir el sangrado."
+    },
+    {
+        name: "Urticaria",
+        keywords: ["urticaria", "ronchas", "habones"],
+        medication: "Antihistamínico (Cetirizina, Loratadina)",
+        reasoning: "Ayuda a reducir la reacción alérgica que provoca urticaria."
+    },
+    {
+        name: "Hiedra Venenosa (Rash)",
+        keywords: ["hiedra venenosa", "roble venenoso", "erupción por planta"],
+        medication: "Crema de Hidrocortisona, Loción de Calamina",
+        reasoning: "Calma la picazón y reduce la inflamación de las erupciones por plantas."
+    },
+    {
+        name: "Quemadura Leve (Primer Grado)",
+        keywords: ["quemadura leve", "quemadura superficial", "piel enrojecida"],
+        medication: "Agua Fría, Gel de Aloe Vera",
+        reasoning: "Refresca y calma el área, aliviando el dolor y ayudando a la curación."
+    },
+    {
+        name: "Gases / Distensión",
+        keywords: ["gases", "distensión abdominal", "exceso de gases"],
+        medication: "Simeticona (Gas-X)",
+        reasoning: "Ayuda a descomponer las burbujas de gas para una liberación más fácil."
+    },
+    {
+        name: "Mareo por Movimiento",
+        keywords: ["mareo por movimiento", "náuseas al viajar", "cinetosis"],
+        medication: "Dimenhidrinato (Dramamine)",
+        reasoning: "Reduce la náusea y el vómito causados por el movimiento."
+    },
+    {
+        name: "Deshidratación Leve",
+        keywords: ["deshidratación leve", "boca seca", "mareo leve"],
+        medication: "Soluciones de Rehidratación Oral (Pedialyte)",
+        reasoning: "Reponen electrolitos y líquidos."
+    },
+    {
+        name: "Cefalea Tensional Leve",
+        keywords: ["cefalea tensional", "dolor de cabeza por estrés", "presión en la cabeza"],
+        medication: "Paracetamol o Ibuprofeno",
+        reasoning: "Alivia el dolor asociado con las cefaleas tensionales."
+    },
+    {
+        name: "Somnolencia Diurna Leve",
+        keywords: ["somnolencia diurna", "cansancio durante el día", "fatiga leve"],
+        medication: "Café o Pastillas de Cafeína (OTC)",
+        reasoning: "Aumenta la alerta temporalmente."
+    },
+    {
+        name: "Indigestión Ácida Ocasional",
+        keywords: ["indigestión ácida", "dispepsia leve", "estómago agrio"],
+        medication: "Antiácidos",
+        reasoning: "Neutralizan el ácido estomacal para un alivio rápido."
+    },
+    {
+        name: "Náuseas Ocasionales (No Específicas)",
+        keywords: ["náuseas sin causa definida", "sensación de mareo"],
+        medication: "Bismuto Subsalicilato (Pepto-Bismol)",
+        reasoning: "Ayuda a calmar el estómago y aliviar las náuseas leves."
+    },
+    {
+        name: "Ojos Irritados (No Alérgicos)",
+        keywords: ["ojos irritados", "ojos rojos (no alérgicos)", "ojos cansados"],
+        medication: "Gotas Lubricantes",
+        reasoning: "Hidratan los ojos y reducen la irritación."
+    },
+    {
+        name: "Síntomas Leves de Resfriado (No específicos)",
+        keywords: ["resfriado leve", "leve constipado", "síntomas ligeros de resfriado"],
+        medication: "Combinación para el Resfriado (Paracetamol + Descongestionante)",
+        reasoning: "Alivia síntomas leves de resfriado como dolores y nariz tapada."
+    },
+    {
+        name: "Comedones Leves (Puntos Blancos/Negros)",
+        keywords: ["comedones", "puntos blancos", "puntos negros"],
+        medication: "Limpiador con Ácido Salicílico",
+        reasoning: "Ayuda a destapar los poros y reducir brotes leves."
+    },
+    {
+        name: "Talones Agrietados",
+        keywords: ["talones agrietados", "pies secos", "fisuras en los talones"],
+        medication: "Crema con Urea",
+        reasoning: "Suaviza la piel gruesa, seca y ayuda a sanar las grietas."
+    },
+    {
+        name: "Ampollas por Fricción",
+        keywords: ["ampollas", "ampolla por roce", "ampollas en el pie"],
+        medication: "Apósitos Protectores para Ampollas",
+        reasoning: "Protege el área y promueve la curación."
+    },
+    {
+        name: "Irritación Leve del Oído de Nadador",
+        keywords: ["oído de nadador leve", "picazón en el canal auditivo", "sequedad en el oído"],
+        medication: "Gotas de Ácido Acético (OTC)",
+        reasoning: "Ayudan a restablecer el pH del canal auditivo y reducir la irritación leve."
+    }
+];
+
+let currentLanguage = 'en'; // default language
+
+function updateLanguage() {
+    const langSelect = document.getElementById('languageSelect');
+    currentLanguage = langSelect.value;
+    
+    const title = document.getElementById('title');
+    const intro = document.getElementById('intro');
+    const symptomInput = document.getElementById('symptomInput');
+    const disclaimer = document.getElementById('disclaimer');
+    const languageLabel = document.getElementById('languageLabel');
+    
+    if (currentLanguage === 'en') {
+        title.innerText = "Advanced Symptom Checker (Experimental)";
+        intro.innerText = "Type in your symptoms and get an experimental OTC medication suggestion. Not medical advice.";
+        symptomInput.placeholder = "e.g., 'I have a throbbing headache and a stuffy nose'";
+        disclaimer.innerHTML = "<strong>Disclaimer:</strong> This tool is not a substitute for professional medical advice.";
+        languageLabel.innerText = "Language / Idioma:";
+    } else {
+        title.innerText = "Comprobador de Síntomas Avanzado (Experimental)";
+        intro.innerText = "Escribe tus síntomas y obtén una sugerencia experimental de medicamento de venta libre. No es asesoramiento médico.";
+        symptomInput.placeholder = "por ejemplo: 'Tengo un fuerte dolor de cabeza y la nariz congestionada'";
+        disclaimer.innerHTML = "<strong>Descargo de responsabilidad:</strong> Esta herramienta no sustituye el consejo médico profesional.";
+        languageLabel.innerText = "Idioma / Language:";
+    }
+}
+
+// Basic fuzzy matching
 function suggestMedication() {
     const input = document.getElementById('symptomInput').value.toLowerCase().trim();
     const resultsDiv = document.getElementById('results');
     resultsDiv.innerHTML = ""; // Clear previous results
     
     if (!input) {
-        resultsDiv.innerHTML = "<p>Please enter your symptoms first.</p>";
+        if (currentLanguage === 'en') {
+            resultsDiv.innerHTML = "<p>Please enter your symptoms first.</p>";
+        } else {
+            resultsDiv.innerHTML = "<p>Por favor, ingrese sus síntomas primero.</p>";
+        }
         return;
     }
+
+    const conditions = currentLanguage === 'en' ? conditionsEN : conditionsES;
 
     let bestMatch = null;
     let bestScore = 0;
@@ -165,24 +893,42 @@ function suggestMedication() {
 
     let output;
     if (bestMatch && bestScore > 0) {
-        // Found a condition that matches best
-        output = `
-            <h3>Suggested Medication:</h3>
-            <p><strong>${bestMatch.medication}</strong></p>
-            <h4>Reasoning:</h4>
-            <p>${bestMatch.reasoning}</p>
-            <p><em>Note: This is not professional medical advice.</em></p>
-        `;
+        if (currentLanguage === 'en') {
+            output = `
+                <h3>Suggested Medication:</h3>
+                <p><strong>${bestMatch.medication}</strong></p>
+                <h4>Reasoning:</h4>
+                <p>${bestMatch.reasoning}</p>
+                <p><em>Note: This is not professional medical advice.</em></p>
+            `;
+        } else {
+            output = `
+                <h3>Medicación Sugerida:</h3>
+                <p><strong>${bestMatch.medication}</strong></p>
+                <h4>Razón:</h4>
+                <p>${bestMatch.reasoning}</p>
+                <p><em>Nota: Esto no es asesoramiento médico profesional.</em></p>
+            `;
+        }
     } else {
-        // No recognizable symptoms
-        output = `
-            <h3>No Specific Recommendation Found</h3>
-            <p>Your symptoms don't match known conditions in this experimental tool. Consider seeking professional medical help.</p>
-        `;
+        if (currentLanguage === 'en') {
+            output = `
+                <h3>No Specific Recommendation Found</h3>
+                <p>Your symptoms don't match known conditions in this experimental tool. Consider seeking professional medical help.</p>
+            `;
+        } else {
+            output = `
+                <h3>No se encontró una recomendación específica</h3>
+                <p>Tus síntomas no coinciden con las condiciones conocidas en esta herramienta experimental. Considera buscar ayuda médica profesional.</p>
+            `;
+        }
     }
     
     resultsDiv.innerHTML = output;
 }
+
+// Initialize page language to default
+updateLanguage();
 </script>
 </body>
 </html>
